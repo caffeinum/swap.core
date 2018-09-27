@@ -101,26 +101,26 @@ class Flow {
   }
 
   finishStep(data, constraints) {
-    console.log(`on step ${this.state.step}, constraints =`, constraints)
+    console.log(`${this._flowName}: on step ${this.state.step}, constraints =`, constraints)
 
     if (constraints) {
       const { step, silentError } = constraints
 
       const n_step = this.stepNumbers[step]
-      console.log(`trying to finish step ${step} = ${n_step} when on step ${this.state.step}`)
+      console.log(`${this._flowName}: trying to finish step ${step} = ${n_step} when on step ${this.state.step}`)
 
       if (step && this.state.step < n_step) {
         if (silentError) {
-          console.error(`Cant finish step ${step} = ${n_step} when on step ${this.state.step}`)
+          console.error(`${this._flowName}: Cant finish step ${step} = ${n_step} when on step ${this.state.step}`)
           return
         } else {
-          throw new Error(`Cant finish step ${step} = ${n_step} when on step ${this.state.step}`)
+          throw new Error(`${this._flowName}: Cant finish step ${step} = ${n_step} when on step ${this.state.step}`)
           return
         }
       }
     }
 
-    console.log(`proceed to step ${this.state.step+1}, data=`, data)
+    console.log(`${this._flowName}: proceed to step ${this.state.step+1}, data=`, data)
 
     this.goNextStep(data)
   }
@@ -142,6 +142,47 @@ class Flow {
   goStep(index) {
     this.swap.events.dispatch('enter step', index)
     this.steps[index]()
+  }
+
+  goToStep(stepName, data) {
+    const { step } = this.state
+    const newStep = this.stepNumbers[stepName]
+
+    if (!newStep) {
+      throw new Error(`Unknown step`)
+    }
+
+    this.swap.events.dispatch('leave step', step)
+
+    this.setState({
+      step: newStep,
+      ...(data || {}),
+    }, true)
+
+    this.goStep(newStep)
+  }
+
+  exitStep(_step) {
+    let step
+    if (parseInt(_step)) {
+      step = parseInt(_step)
+    } else if (this.stepNumbers[_step]) {
+      step = _step
+    } else {
+      return console.error(`Unknown step: ${step}`)
+    }
+
+    const lock = this.constraints[step]
+
+    if (lock.length) {
+      for (constraint of lock) {
+        if (!this.state[constraint]) {
+          return console.error(`Cannot exit until satisfied: ${constraint}`)
+        }
+      }
+    }
+
+    this.finishStep()
   }
 
   setState(values, save) {
