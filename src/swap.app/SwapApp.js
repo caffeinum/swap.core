@@ -50,12 +50,15 @@ class SwapApp {
       throw new Error(`SwapApp service should contain "_serviceName" property should be one of ${Object.values(constants.SERVICES)}, got "${service._serviceName}"`)
     }
 
+    service._addEnv(this.env)
+
     this.services[service._serviceName] = service
   }
 
   _addServices(services) {
     // add service to app by _serviceName
     services.forEach((service) => this._addService(service))
+    services.forEach((service) => service._addServices(this.services))
     // spy expects
     Object.keys(this.services).forEach((serviceName) => this.services[serviceName]._waitRelationsResolve())
     // init services

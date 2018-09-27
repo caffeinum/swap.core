@@ -1,7 +1,7 @@
 import SwapApp from 'swap.app'
 
 
-const login = (_privateKey) => {
+const login = (_privateKey, app) => {
   const storageKey = `${SwapApp.network}:btc:privateKey`
   let privateKey = _privateKey || SwapApp.env.storage.getItem(storageKey)
   let account
