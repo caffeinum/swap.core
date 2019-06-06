@@ -159,6 +159,23 @@ class Bitcoin {
     .catch(error => filterError(error))
   }
 
+  fetchTransactions(address) {
+    // {
+    //   ...
+    //   "transactions": [
+    //     "bb26898f0b8f1a90177eda8a0953e6ea156806868aa06bc4ac7c0d0ea4a536b9",
+    //     "640bc8d31b36f712fabdc7104e707274490e091c7dead88f580ca4b4274b89ee"
+    //   ]
+    // }
+    return request.get(`${this.root}/addr/${address}`)
+      .then(json => {
+        const { transactions } = JSON.parse(json)
+        return transactions
+      })
+      .then(txs => Promise.all(txs.map(fetchTx)))
+      .catch(error => filterError(error))
+  }
+
   fetchTx(hash) {
     return request
       .get(`${this.root}/tx/${hash}`)

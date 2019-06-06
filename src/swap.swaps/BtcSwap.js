@@ -10,6 +10,7 @@ class BtcSwap extends SwapInterface {
    * @param options
    * @param options.fetchBalance
    * @param options.fetchUnspents
+   * @param options.fetchTransactions
    * @param options.broadcastTx
    * @param options.fetchTxInfo {(tx_hash) => Promise({ confidence, fees })}
    * @param options.estimateFeeValue { ({ inSatoshis, speed, address, txSize }) => Promise(fee_value) }
@@ -40,8 +41,10 @@ class BtcSwap extends SwapInterface {
     this.fetchUnspents  = options.fetchUnspents
     this.broadcastTx    = options.broadcastTx
     this.feeValue       = options.feeValue || 546
-    this.fetchTxInfo    = options.fetchTxInfo || (() => {})
-    this.estimateFeeValue = options.estimateFeeValue || (() => 0)
+    this.fetchTxInfo    = options.fetchTxInfo || (() => ({}))
+    this.estimateFeeRate = options.estimateFeeRate || (() => 0)
+
+    this.blocks = []
   }
 
   _initSwap(app) {
@@ -248,6 +251,55 @@ class BtcSwap extends SwapInterface {
     if (expectedValue.isGreaterThan(totalConfidentUnspent)) {
       return `Expected script value: ${expectedValue.toString()} with confidence above ${expectedConfidence}, got: ${totalConfidentUnspent}`
     }
+  }
+
+  /**
+   *
+   * @param {object} data
+   * @param {string} data.secretHash
+   * @param {string} data.secret
+   * @param {number} startScan
+   */
+  async fetchState({ secretHash }, { height, creatingTransaction, withdrawTransaction, refundTransaction }, startScan = Date.now()) {
+
+    const block = await this.fetchBlock('last')
+
+    // const block = await this.fetchBlock({ from: '' })
+
+    return {
+      height: '',
+      creatingTransaction: new Transaction(),
+      withdrawTransaction: null,
+      refundTransaction: {
+        hash: '',
+        confidence: '',
+        block: '',
+        blockNumber: '',
+      },
+    }
+  }
+
+  /**
+   *
+   * @param {object} data
+   * @param {object} data.scriptValues
+   * @returns {Promise}
+   */
+  async wasRefunded({ scriptValues }) {
+    const me = this.app.auth.accounts.btc
+
+    const { scriptAddress } = this.createScript(scriptValues)
+
+    const unspents = await this.fetchUnspents(scriptAddress)
+
+    if (unspents.length > 0) return false
+
+    const txs = await this.fetchTransactions(scriptAddress)
+
+    console.log('address', txs.filter(tx => tx.vout.scriptPubKey.addresses.includes(me.address)))
+    console.log('publicKey', txs.filter(tx => tx.vout.scriptPubKey.hex === me.publicKey))
+
+    return true
   }
 
   /**

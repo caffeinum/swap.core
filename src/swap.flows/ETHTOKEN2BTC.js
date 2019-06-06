@@ -64,8 +64,6 @@ export default (tokenName) => {
         isBalanceEnough: false,
         balance: null,
 
-        btcScriptCreatingTransactionHash: null,
-        ethSwapCreationTransactionHash: null,
         canCreateEthTransaction: true,
         isEthContractFunded: false,
 
@@ -74,11 +72,16 @@ export default (tokenName) => {
         isEthWithdrawn: false,
         isBtcWithdrawn: false,
 
-        refundTransactionHash: null,
         isRefunded: false,
 
         isFinished: false,
         isSwapExist: false,
+      }
+
+      this.remoteState = {
+        btcScriptCreatingTransactionHash: null,
+        ethSwapCreationTransactionHash: null,
+        refundTransactionHash: null,
       }
 
       this.swap.room.once('swap was canceled for core', () => {

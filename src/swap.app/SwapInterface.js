@@ -13,6 +13,22 @@ class SwapInterface {
 
     this.accounts = app.services.auth.accounts
   }
+
+  create(scriptValues) {
+
+  }
+
+  checkScript(scriptValues) {
+
+  }
+
+  withdraw(scriptValues) {
+
+  }
+
+  refund(scriptValues) {
+    throw new Error(`Not implemented`)
+  }
 }
 
 

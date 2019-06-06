@@ -73,13 +73,26 @@ class EthTokenSwap extends SwapInterface {
     this.ERC20          = new this.app.env.web3.eth.Contract(this.tokenAbi, this.tokenAddress)
   }
 
-  async updateGas() {
+  /**
+   * @deprecated
+   */
+  updateGas() {
+    console.warn(`EthSwap.updateGas() is deprecated and will be removed. Use .updateGasPrice()`)
+    return updateGasPrice()
+  }
+
+  async updateGasPrice() {
+    debug('gas price before update', this.gasPrice)
+
     try {
       this.gasPrice = await this.estimateGasPrice({ speed: 'fast' })
     } catch(err) {
-      debug('swap.core:swaps')(`EthTokenSwap: Error with gas update: ${err.message}, using old value gasPrice=${this.gasPrice}`)
+      debug(`EthSwap: Error with gas update: ${err.message}, using old value gasPrice=${this.gasPrice}`)
     }
+
+    debug('gas price after update', this.gasPrice)
   }
+
 
   /**
    *

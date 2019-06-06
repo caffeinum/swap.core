@@ -17,6 +17,8 @@ class Flow {
       isWaitingForOwner: false,
     }
 
+    this.remoteState = {}
+
     this._attachSwapApp(swap.app)
   }
 
@@ -120,25 +122,26 @@ class Flow {
   _saveState() {
     this.app.env.storage.setItem(`flow.${this.swap.id}`, this.state)
   }
-  finishStep(data, constraints) {
+
+  finishStep(step, data, silentError = true) {
     debug('swap.core:swap')(`on step ${this.state.step}, constraints =`, constraints)
 
-    if (constraints) {
-      const { step, silentError } = constraints
+    // if (constraints) {
+    //   const { step, silentError } = constraints
 
-      const n_step = this.stepNumbers[step]
-      debug('swap.core:swap')(`trying to finish step ${step} = ${n_step} when on step ${this.state.step}`)
+    const n_step = this.stepNumbers[step]
+    debug('swap.core:swap')(`trying to finish step ${step} = ${n_step} when on step ${this.state.step}`)
 
-      if (step && this.state.step != n_step) {
-        if (silentError) {
-          console.error(`Cant finish step ${step} = ${n_step} when on step ${this.state.step}`)
-          return
-        } else {
-          throw new Error(`Cant finish step ${step} = ${n_step} when on step ${this.state.step}`)
-          return
-        }
+    if (step && this.state.step != n_step) {
+      if (silentError) {
+        console.error(`Cant finish step ${step} = ${n_step} when on step ${this.state.step}`)
+        return
+      } else {
+        throw new Error(`Cant finish step ${step} = ${n_step} when on step ${this.state.step}`)
+        return
       }
     }
+    // }
 
     debug('swap.core:swap')(`proceed to step ${this.state.step+1}, data=`, data)
 
@@ -187,6 +190,19 @@ class Flow {
       event: 'swap was canceled for core',// сее сообщение нужно для изменения стейта и получения информации о заверщении свапа в коре
     })
     console.warn(`The Swap ${this.swap.id} was closed by you`)
+  }
+
+  async updateRemoteState() {
+    const { secretHash } = this.state
+
+    const owner = await this.swap.ownerSwap.fetchState({ secretHash }, this.remoteState)
+    const participant = await this.swap.participantSwap.fetchState({ secretHash }, this.remoteState)
+
+    this.remoteState = {
+      ...this.remoteState,
+      ...owner,
+      ...participant,
+    }
   }
 }
 
